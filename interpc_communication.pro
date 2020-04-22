@@ -8,29 +8,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    MainStream/StreamTcpClient/streamtcpclient.cpp \
+    MainStream/StreamTcpServer/streamtcpserver.cpp \
+    MainStream/StreamTcpServer/tcpserverclient.cpp \
+    MainStream/StreamWebsocketServer/streamwebsocketserver.cpp \
+    MainStream/StreamWebsocketServer/websocketserverworker.cpp \
     MainStream/icommunicator.cpp \
-    MainStream/streamtcpclient.cpp \
-    MainStream/streamtcpserver.cpp \
-    MainStream/streamwebsocketserver.cpp \
-    MainStream/tcpserverclient.cpp \
-    MainStream/websocketserverworker.cpp \
     main.cpp \
     Gui/mainwindow.cpp \
     appcontroller.cpp
 
 HEADERS += \
     Gui/mainwindow.h \
-    MainStream/ThreadSafeQueue.hpp \
+    MainStream/StreamTcpClient/streamtcpclient.h \
+    MainStream/StreamTcpServer/streamtcpserver.h \
+    MainStream/StreamTcpServer/tcpserverclient.h \
+    MainStream/StreamWebsocketServer/streamwebsocketserver.h \
+    MainStream/StreamWebsocketServer/websocketserverworker.h \
+    MainStream/Utils/ThreadSafeQueue.hpp \
     MainStream/bufferchunk.hpp \
     MainStream/common.hpp \
     MainStream/constants.h \
     MainStream/icommunicator.h \
     MainStream/streamcommunicationtype.hpp \
-    MainStream/streamtcpclient.h \
-    MainStream/streamtcpserver.h \
-    MainStream/streamwebsocketserver.h \
-    MainStream/tcpserverclient.h \
-    MainStream/websocketserverworker.h \
     appcontroller.h
 
 FORMS += \

@@ -1,8 +1,8 @@
 #ifndef STREAMWEBSOCKETSERVER_H
 #define STREAMWEBSOCKETSERVER_H
 
-#include "ThreadSafeQueue.hpp"
-#include "common.hpp"
+#include "../Utils/ThreadSafeQueue.hpp"
+#include "../common.hpp"
 #include "websocketserverworker.h"
 
 #include <QPointer>

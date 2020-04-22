@@ -1,7 +1,7 @@
 #ifndef STREAMTCPSERVER_H
 #define STREAMTCPSERVER_H
 
-#include "ThreadSafeQueue.hpp"
+#include "../Utils/ThreadSafeQueue.hpp"
 #include "tcpserverclient.h"
 
 #include <QObject>

@@ -1,5 +1,6 @@
 #include "appcontroller.h"
 
+
 AppController::AppController(QObject *parent)
     : QObject(parent)
     , connectionUrl_("tcp://127.0.0.1:"+QString::number(DEFAULT_TCP_PORT))

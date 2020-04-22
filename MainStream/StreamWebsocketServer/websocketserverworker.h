@@ -1,8 +1,8 @@
 #ifndef WEBSOCKETSERVERWORKER_H
 #define WEBSOCKETSERVERWORKER_H
 
-#include "ThreadSafeQueue.hpp"
-#include "common.hpp"
+#include "../Utils/ThreadSafeQueue.hpp"
+#include "../common.hpp"
 
 #include <QPointer>
 #include <QThread>

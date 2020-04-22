@@ -1,34 +1,36 @@
-#ifndef TCPSERVERCLIENT_H
-#define TCPSERVERCLIENT_H
+#ifndef TCPCLIENT_H
+#define TCPCLIENT_H
 
-#include "ThreadSafeQueue.hpp"
-#include "common.hpp"
+#include "../Utils/ThreadSafeQueue.hpp"
+#include "../common.hpp"
 
 #include <QPointer>
 #include <QTcpSocket>
 #include <QThread>
+#include <QTimer>
+#include <QUrl>
 
 
 namespace MainStream {
 
-class TcpServerClient : public QObject {
+class StreamTcpClient : public QThread {
     Q_OBJECT
 
 public:
-    explicit TcpServerClient(qintptr socketDescriptor, InThreadSafeQueue &inQueue, OutThreadSafeQueue &outQueue, QObject *parent = nullptr);
+    explicit StreamTcpClient(QUrl hostAddr, InThreadSafeQueue &inQueue, OutThreadSafeQueue &outQueue, QObject *parent = nullptr);
 
-    ~TcpServerClient() override;
+    ~StreamTcpClient() override;
+
+    void run() override;
 
 signals:
-    // public
+    // public signals
     void sigClientDisconnected();
 
-    // private
-    void sigStopClient(QPrivateSignal);
+    // private signals
+    void sigCloseClient(QPrivateSignal);
 
 public slots:
-    void slotStartClient();
-
     void slotStopClient();
 
 private slots:
@@ -42,7 +44,7 @@ protected:
     void timerEvent(QTimerEvent *event) override;
 
 private:
-    qintptr socketDescriptor_;
+    QUrl hostAddr_;
     QPointer<QTcpSocket> clientSocket_;
     std::array<char, READ_BUFSIZE> readBuf_;
 
@@ -52,4 +54,4 @@ private:
 
 }
 
-#endif // TCPSERVERCLIENT_H
+#endif // TCPCLIENT_H

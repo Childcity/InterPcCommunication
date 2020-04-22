@@ -2,9 +2,9 @@
 #define APPCONTROLLER_H
 
 #include "MainStream/streamcommunicationtype.hpp"
-#include "MainStream/streamtcpserver.h"
-#include "MainStream/streamtcpclient.h"
-#include "MainStream/streamwebsocketserver.h"
+#include <MainStream/StreamTcpServer/streamtcpserver.h>
+#include "MainStream/StreamTcpClient/streamtcpclient.h"
+#include "MainStream/StreamWebsocketServer/streamwebsocketserver.h"
 
 #include <QTimer>
 
