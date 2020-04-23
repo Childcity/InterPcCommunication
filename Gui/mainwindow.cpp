@@ -17,11 +17,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::slotNewStreamData(QByteArray data)
-{
-    ui->receiveTextEdit->insertPlainText(QString::fromUtf8(data));
-}
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     emit sigCloseEvent();
@@ -83,4 +78,14 @@ void MainWindow::on_sendTextEdit_textChanged()
     sentOffset_ = allText.size();
 }
 
+void MainWindow::slotNewStreamData(const QByteArray &data)
+{
+    ui->receiveTextEdit->insertPlainText(QString::fromUtf8(data));
+}
 
+void MainWindow::on_pushButton_clicked()
+{
+    std::uint64_t bytesCount = ui->mbSpinBox->text().toUInt() * 1048576;
+    testBuffer_.fill('F', bytesCount).prepend('S').append('E');
+    emit sigNewStreamData(testBuffer_);
+}

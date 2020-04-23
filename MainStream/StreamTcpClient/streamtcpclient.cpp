@@ -36,8 +36,7 @@ void MainStream::StreamTcpClient::run()
 
         clientSocket_->connectToHost(hostAddr_.host(), hostAddr_.port(DEFAULT_TCP_PORT));
 
-        using namespace std::chrono;
-        startTimer(1ms, Qt::TimerType::PreciseTimer);
+        QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &StreamTcpClient::outBuffChecker);
     });
 
     exec();
@@ -50,12 +49,14 @@ void MainStream::StreamTcpClient::slotStopClient()
 
 void MainStream::StreamTcpClient::slotReadyRead()
 {
-    qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
-    qDebug() << "Thread[" << QThread::currentThreadId()
-             << "]. Client[" << clientSocket_->socketDescriptor()
-             << "]. Read: " << QByteArray(readBuf_.data(), rlen);
-    for (int i = 0; i < rlen; ++i) {
-        inQueue_.push(readBuf_[i]);
+    while (clientSocket_->bytesAvailable() > 0) {
+        qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
+        //qDebug() << "Thread[" << QThread::currentThreadId()
+        //         << "]. Client[" << clientSocket_->socketDescriptor()
+        //         << "]. Read: " << QByteArray(readBuf_.data(), rlen);
+        for (int i = 0; i < rlen; ++i) {
+            inQueue_.push(readBuf_[i]);
+        }
     }
 }
 
@@ -81,11 +82,18 @@ void MainStream::StreamTcpClient::slotCloseClient()
     emit sigClientDisconnected();
 }
 
-void MainStream::StreamTcpClient::timerEvent(QTimerEvent *event)
+void MainStream::StreamTcpClient::outBuffChecker()
 {
-    Q_UNUSED(event)
-    char data;
-    while (outQueue_.tryPop(data)) {
-        clientSocket_->write(&data, 1);
+    char data; int sended = 0;
+    while (sended < 16384 && outQueue_.tryPop(data)) {
+        writeBuf_[sended] = data;
+        sended++;
     }
+
+    int wr = clientSocket_->write(writeBuf_.data(), sended);
+    if(wr < sended){
+        qDebug() <<"wr:"<<wr<<"sendd:"<<sended<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+    }
+
+    QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &StreamTcpClient::outBuffChecker);
 }

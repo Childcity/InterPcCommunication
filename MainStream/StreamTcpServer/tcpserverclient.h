@@ -38,8 +38,8 @@ private slots:
 
     void slotCloseClient();
 
-protected:
-    void timerEvent(QTimerEvent *event) override;
+private:
+    void outBuffChecker();
 
 private:
     qintptr socketDescriptor_;

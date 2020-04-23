@@ -19,21 +19,21 @@ public:
     ~AppController() override;
 
 signals:
-    void sigStreamReaded(QByteArray data);
+    void sigStreamReaded(const QByteArray &);
 
 public slots:
-    void slotChangeConnectionInfo(const QString connectionInfo);
+    void slotChangeConnectionInfo(const QString);
 
-    void slotChangeConnector(const StreamCommunicationType type);
+    void slotChangeConnector(const StreamCommunicationType);
 
     void slotChangeWsPort(int port);
 
-    void slotSendStream(QByteArray data);
+    void slotSendStream(const QByteArray &);
 
     void quit();
 
-protected:
-    void timerEvent(QTimerEvent *) override;
+private:
+    void inBuffChecker();
 
 private:
     StreamCommunicationType connectorType_;

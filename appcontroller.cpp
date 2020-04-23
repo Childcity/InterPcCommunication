@@ -1,5 +1,6 @@
 #include "appcontroller.h"
 
+#include <QtConcurrent>
 
 AppController::AppController(QObject *parent)
     : QObject(parent)
@@ -7,16 +8,14 @@ AppController::AppController(QObject *parent)
 {
     connectorType_ = StreamCommunicationType::TcpServer;
     pcTcpServer_ = new StreamTcpServer(connectionUrl_.port(), inQueue_, outQueue_, this);
-    webServer_ = new StreamWebsocketServer(DEFAULT_WEBSOCKET_PORT, inQueue_, outQueue_, this);
+    //webServer_ = new StreamWebsocketServer(DEFAULT_WEBSOCKET_PORT, inQueue_, outQueue_, this);
 
     QTimer::singleShot(0, this, [=]{
         if(pcTcpServer_->startServer()){
             qDebug() << "Server has been started on port: " << connectionUrl_.port();
         }
+        inBuffChecker();
     });
-
-    using namespace std::chrono;
-    startTimer(1ms, Qt::TimerType::PreciseTimer);
 }
 
 AppController::~AppController()
@@ -75,11 +74,13 @@ void AppController::slotChangeWsPort(int port)
     webServer_ = new StreamWebsocketServer(port, inQueue_, outQueue_, this);
 }
 
-void AppController::slotSendStream(QByteArray data)
+void AppController::slotSendStream(const QByteArray &data)
 {
-    for (const auto ch : data) {
-        outQueue_.push(ch);
-    }
+    QFuture<void> future = QtConcurrent::run([=](const QByteArray &data){
+        for (const auto ch : data) {
+            outQueue_.push(ch);
+        }
+    }, data);
 }
 
 void AppController::quit()
@@ -100,7 +101,9 @@ void AppController::quit()
     }
 }
 
-void AppController::timerEvent(QTimerEvent *)
+QElapsedTimer timer;
+std::uint64_t totalBytesNum = 0;
+void AppController::inBuffChecker()
 {
 
     /*
@@ -117,4 +120,29 @@ void AppController::timerEvent(QTimerEvent *)
          *      emit sigStreamReaded(ba);
          *  }
          */
+
+    std::uint64_t currentBytesNum = 0;
+
+    char data = 0;
+    while (inQueue_.tryPop(data)) {
+        if(data == char('S')) { // start a timer, when we receive char 'S'
+            timer.start();
+        }
+        totalBytesNum++;
+        currentBytesNum++;
+    }
+
+    if(data == char('E')) {// log a timer.eapsed, when we receive char 'S'
+        qDebug() << "Total received: " << totalBytesNum <<"(~" << totalBytesNum/1048576. << "Mb)"
+                 << "Time: " << timer.elapsed()/1000. << "(s"  << timer.elapsed() <<"ms)"
+                 << "\tSpeed: " << ((totalBytesNum/1048576.)/timer.elapsed())/1000. <<"mb/s";
+        totalBytesNum = 0;
+    }
+
+    // for debug reason
+    //if (totalBytesNum > 0 && (totalBytesNum % 1000) == 0) {
+    //    qDebug() << "Total received: " << totalBytesNum << "Currently received: " << currentBytesNum <<data;
+    //}
+
+    QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &AppController::inBuffChecker);
 }

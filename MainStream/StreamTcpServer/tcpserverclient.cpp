@@ -1,5 +1,7 @@
 #include "tcpserverclient.h"
 
+#include <QTimer>
+
 
 MainStream::TcpServerClient::TcpServerClient(qintptr socketDescriptor, MainStream::InThreadSafeQueue &inQueue, MainStream::OutThreadSafeQueue &outQueue, QObject *parent)
     : QObject(parent)
@@ -39,8 +41,7 @@ void MainStream::TcpServerClient::slotStartClient()
         emit sigClientDisconnected();
     }
 
-    using namespace std::chrono;
-    startTimer(1ms, Qt::TimerType::PreciseTimer);
+    QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &TcpServerClient::outBuffChecker);
 }
 
 void MainStream::TcpServerClient::slotStopClient()
@@ -50,12 +51,14 @@ void MainStream::TcpServerClient::slotStopClient()
 
 void MainStream::TcpServerClient::slotReadyRead()
 {
-    qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
-    qDebug() << "Thread[" << QThread::currentThreadId()
-             << "]. Client[" << clientSocket_->socketDescriptor()
-             << "]. Read: " << QByteArray(readBuf_.data(), rlen);
-    for (int i = 0; i < rlen; ++i) {
-        inQueue_.push(readBuf_[i]);
+    while (clientSocket_->bytesAvailable() > 0) {
+        qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
+        //qDebug() << "Thread[" << QThread::currentThreadId()
+        //         << "]. Client[" << clientSocket_->socketDescriptor()
+        //         << "]. Read: " << QByteArray(readBuf_.data(), rlen);
+        for (int i = 0; i < rlen; ++i) {
+            inQueue_.push(readBuf_[i]);
+        }
     }
 }
 
@@ -77,11 +80,11 @@ void MainStream::TcpServerClient::slotCloseClient()
     qDebug() << "slotStopClient";
 }
 
-void MainStream::TcpServerClient::timerEvent(QTimerEvent *event)
+void MainStream::TcpServerClient::outBuffChecker()
 {
-    Q_UNUSED(event)
-    char data;
-    while (outQueue_.tryPop(data)) {
-        clientSocket_->write(&data, 1);
+    char data; int sended = 0;
+    while (sended++ < 1024 && outQueue_.tryPop(data)) {
+        while ((clientSocket_->write(&data, 1)) != 1);
     }
+    QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &TcpServerClient::outBuffChecker);
 }

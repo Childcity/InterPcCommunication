@@ -1,4 +1,4 @@
-QT       += core gui serialport websockets network widgets
+QT       += core gui serialport websockets network concurrent widgets
 
 CONFIG += c++17
 

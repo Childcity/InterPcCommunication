@@ -27,10 +27,10 @@ signals:
     void sigConnectionInfoChanged(const QString &);
     void sigConnectionTypeChanged(const StreamCommunicationType);
     void sigWsServerPortChanged(int port);
-    void sigNewStreamData(QByteArray data);
+    void sigNewStreamData(const QByteArray &);
 
 public slots:
-    void slotNewStreamData(QByteArray data);
+    void slotNewStreamData(const QByteArray &);
 
 protected:
     void closeEvent (QCloseEvent *event) override;
@@ -42,13 +42,14 @@ private slots:
     void on_connectionHost_textChanged(const QString &arg);
     void on_connectionPort_textChanged(const QString &arg);
     void on_wsServerPort_textChanged(const QString &arg);
+    void on_pushButton_clicked();
+
+private:
     void parseUrl();
-
-
-
 
 private:
     Ui::MainWindow *ui;
     int sentOffset_ = 0;
+    QByteArray testBuffer_;
 };
 #endif // MAINWINDOW_H
