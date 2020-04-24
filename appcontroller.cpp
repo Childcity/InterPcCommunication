@@ -133,9 +133,10 @@ void AppController::inBuffChecker()
     }
 
     if(data == char('E')) {// log a timer.eapsed, when we receive char 'S'
-        qDebug() << "Total received: " << totalBytesNum <<"(~" << totalBytesNum/1048576. << "Mb)"
-                 << "Time: " << timer.elapsed()/1000. << "(s"  << timer.elapsed() <<"ms)"
-                 << "\tSpeed: " << ((totalBytesNum/1048576.)/timer.elapsed())/1000. <<"mb/s";
+        double mbS = (totalBytesNum/1048576.)/(timer.elapsed()/1000.);
+        qDebug() << "Total received: " << totalBytesNum <<"(~" << totalBytesNum/1048576. << "MB)"
+                 << "Time: " << timer.elapsed()/1000. << "s  ("  << timer.elapsed() <<"ms)"
+                 << "\tSpeed: " << QString::number(mbS, 'f', 2).toDouble() << "MB/s" << "==" << QString::number(mbS*8., 'f', 2).toDouble() << "Mbit/s";
         totalBytesNum = 0;
     }
 

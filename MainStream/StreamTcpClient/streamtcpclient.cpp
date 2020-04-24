@@ -85,7 +85,7 @@ void MainStream::StreamTcpClient::slotCloseClient()
 void MainStream::StreamTcpClient::outBuffChecker()
 {
     char data; int sended = 0;
-    while (sended < 16384 && outQueue_.tryPop(data)) {
+    while (sended < 8192 && outQueue_.tryPop(data)) {
         writeBuf_[sended] = data;
         sended++;
     }
