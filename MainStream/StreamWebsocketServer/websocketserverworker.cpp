@@ -71,9 +71,9 @@ void MainStream::WebSocketServerWorker::slotTextMessage(const QString &message)
     qDebug() << "Message received:" << message << client;
     QByteArray utf8Str = message.toUtf8();
     if (client) {
-        for (int i = 0; i < message.size(); ++i) {
-            outQueue_.push(utf8Str.at(i));
-        }
+        //for (int i = 0; i < message.size(); ++i) {
+        //    outQueue_.push(utf8Str.at(i));
+        //}
         qDebug() << "OnMessege Client[" << client->peerAddress() << client->peerPort() << client
                  << "]. CurrentThread[" << QThread::currentThreadId()
                  << "].";
@@ -119,11 +119,11 @@ void MainStream::WebSocketServerWorker::slotCloseServer()
 
 void MainStream::WebSocketServerWorker::timerEvent(QTimerEvent *event)
 {
-    Q_UNUSED(event)
-    char data;
-    while (inQueue_.tryPop(data)) {
-        sendToClients(data);
-    }
+    //Q_UNUSED(event)
+    //char data;
+    //while (inQueue_.tryPop(data)) {
+    //    sendToClients(data);
+    //}
 }
 
 QWebSocket *MainStream::WebSocketServerWorker::getCurrentClient()

@@ -8,8 +8,8 @@
 
 namespace MainStream {
 
-using InBuffChunk = char; //BufferChunk<READ_BUFSIZE>;
-using OutBuffChunk = char; //BufferChunk<READ_BUFSIZE>;
+using InBuffChunk = BufferChunk<READ_BUFSIZE>;
+using OutBuffChunk = BufferChunk<WRITE_BUFSIZE>;
 
 using InThreadSafeQueue = ThreadSafeQueue<InBuffChunk>;
 using OutThreadSafeQueue = ThreadSafeQueue<OutBuffChunk>;

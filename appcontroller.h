@@ -6,6 +6,7 @@
 #include "MainStream/StreamTcpClient/streamtcpclient.h"
 #include "MainStream/StreamWebsocketServer/streamwebsocketserver.h"
 
+#include <QElapsedTimer>
 #include <QTimer>
 
 using namespace MainStream;
@@ -45,6 +46,9 @@ private:
 
     InThreadSafeQueue inQueue_;
     OutThreadSafeQueue outQueue_;
+
+    QElapsedTimer timer;
+    std::uint64_t totalBytesNum = 0;
 };
 
 #endif // APPCONTROLLER_H

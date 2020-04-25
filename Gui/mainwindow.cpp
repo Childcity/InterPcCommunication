@@ -86,6 +86,8 @@ void MainWindow::slotNewStreamData(const QByteArray &data)
 void MainWindow::on_pushButton_clicked()
 {
     std::uint64_t bytesCount = ui->mbSpinBox->text().toUInt() * 1048576;
-    testBuffer_.fill('F', bytesCount).prepend('S').append('E');
+    testBuffer_.fill('F', bytesCount);
+    testBuffer_.front() = 'S'; // This will begin speed test
+    testBuffer_.back() = 'E';  // This will end speed test
     emit sigNewStreamData(testBuffer_);
 }

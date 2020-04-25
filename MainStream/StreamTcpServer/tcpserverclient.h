@@ -34,17 +34,18 @@ public slots:
 private slots:
     void slotReadyRead();
 
-    void slotSocketError(QAbstractSocket::SocketError error);
+    void slotSocketError(QAbstractSocket::SocketError);
 
     void slotCloseClient();
 
 private:
     void outBuffChecker();
 
+    void writeData(const MainStream::OutBuffChunk &);
+
 private:
     qintptr socketDescriptor_;
     QPointer<QTcpSocket> clientSocket_;
-    std::array<char, READ_BUFSIZE> readBuf_;
 
     InThreadSafeQueue &inQueue_;
     OutThreadSafeQueue &outQueue_;

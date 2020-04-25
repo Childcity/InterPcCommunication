@@ -36,12 +36,14 @@ public slots:
 private slots:
     void slotReadyRead();
 
-    void slotSocketError(QAbstractSocket::SocketError error);
+    void slotSocketError(QAbstractSocket::SocketError);
 
     void slotCloseClient();
 
 private:
     void outBuffChecker();
+
+    void writeData(const OutBuffChunk &);
 
 private:
     QUrl hostAddr_;

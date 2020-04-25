@@ -50,12 +50,18 @@ void MainStream::StreamTcpClient::slotStopClient()
 void MainStream::StreamTcpClient::slotReadyRead()
 {
     while (clientSocket_->bytesAvailable() > 0) {
-        qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
+        //qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
         //qDebug() << "Thread[" << QThread::currentThreadId()
         //         << "]. Client[" << clientSocket_->socketDescriptor()
         //         << "]. Read: " << QByteArray(readBuf_.data(), rlen);
-        for (int i = 0; i < rlen; ++i) {
-            inQueue_.push(readBuf_[i]);
+        //for (int i = 0; i < rlen; ++i) {
+        //    inQueue_.push(readBuf_[i]);
+        //}
+
+        InBuffChunk chunk;
+        chunk.actualSize = clientSocket_->read(chunk.data.data(), chunk.data.size());
+        if (chunk.actualSize > 0) {
+            inQueue_.push(std::move(chunk));
         }
     }
 }
@@ -84,16 +90,39 @@ void MainStream::StreamTcpClient::slotCloseClient()
 
 void MainStream::StreamTcpClient::outBuffChecker()
 {
-    char data; int sended = 0;
-    while (sended < 8192 && outQueue_.tryPop(data)) {
-        writeBuf_[sended] = data;
-        sended++;
-    }
+    //char data; int sended = 0;
+    //while (sended < 8192 && outQueue_.tryPop(data)) {
+    //    writeBuf_[sended] = data;
+    //    sended++;
+    //}
+    //
+    //int wr = clientSocket_->write(writeBuf_.data(), sended);
+    //if(wr < sended){
+    //    qDebug() <<"wr:"<<wr<<"sendd:"<<sended<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+    //}
 
-    int wr = clientSocket_->write(writeBuf_.data(), sended);
-    if(wr < sended){
-        qDebug() <<"wr:"<<wr<<"sendd:"<<sended<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+    OutBuffChunk data;
+    while (outQueue_.tryPop(data)) {
+        writeData(data);
+        clientSocket_->flush();
     }
 
     QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &StreamTcpClient::outBuffChecker);
+}
+
+void MainStream::StreamTcpClient::writeData(const MainStream::OutBuffChunk &data)
+{
+    std::size_t sendedNum = clientSocket_->write(data.data.data(), data.actualSize);
+
+    if(sendedNum < data.actualSize){
+        std::size_t totalSended = sendedNum;
+        qDebug() <<"data.actualSize:"<<data.actualSize<<"sended:"<<sendedNum<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+        qDebug() << "All buffer to be sended:" << QByteArray(data.data.data(), data.actualSize);
+        while (totalSended < data.actualSize) {
+            qDebug() << "sendedNum:" << sendedNum << "totalSended:" << totalSended << "actualSize - sendedNum =" << data.actualSize - sendedNum;
+            qDebug() << "*(data.data.data()+sendedNum) = " << *(data.data.data()+sendedNum);
+            qDebug() << "To be sended next:" << QByteArray((data.data.data()+sendedNum), data.actualSize - sendedNum);
+            sendedNum = clientSocket_->write((data.data.data()+sendedNum), data.actualSize - sendedNum);
+        }
+    }
 }
