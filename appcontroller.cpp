@@ -11,7 +11,7 @@ AppController::AppController(QObject *parent)
     //webServer_ = new StreamWebsocketServer(DEFAULT_WEBSOCKET_PORT, inQueue_, outQueue_, this);
 
     QTimer::singleShot(0, this, [=]{
-        if(pcTcpServer_->startServer()){
+        if (pcTcpServer_->startServer()) {
             qDebug() << "Server has been started on port: " << connectionUrl_.port();
         }
         inBuffChecker();
@@ -33,18 +33,18 @@ void AppController::slotChangeConnector(const StreamCommunicationType type)
 {
     // delete existing connector
     switch (connectorType_) {
-    case StreamCommunicationType::TcpServer:
-        if(pcTcpServer_){
-            pcTcpServer_->stopServer();
-            pcTcpServer_->deleteLater();
-        }
-        break;
-    case StreamCommunicationType::TcpClient:
-        if(pcTcpClient_){
-            pcTcpClient_->slotStopClient();
-            // pcTcpClient_ will be autodeleted
-        }
-        break;
+        case StreamCommunicationType::TcpServer:
+            if (pcTcpServer_) {
+                pcTcpServer_->stopServer();
+                pcTcpServer_->deleteLater();
+            }
+            break;
+        case StreamCommunicationType::TcpClient:
+            if (pcTcpClient_) {
+                pcTcpClient_->slotStopClient();
+                // pcTcpClient_ will be autodeleted
+            }
+            break;
     }
 
     // create new connector
@@ -66,7 +66,7 @@ void AppController::slotChangeConnector(const StreamCommunicationType type)
 
 void AppController::slotChangeWsPort(int port)
 {
-    if(webServer_){
+    if (webServer_) {
         webServer_->slotStopServer();
         webServer_->deleteLater();
     }
@@ -85,25 +85,22 @@ void AppController::slotSendStream(const QByteArray &data)
             chunk.actualSize = actualSize;
             outQueue_.push(std::move(chunk));
         }
-        //for (const auto ch : data) {
-        //    outQueue_.push(ch);
-        //}
     }, data);
 }
 
 void AppController::quit()
 {
-    if(pcTcpServer_){
-        pcTcpServer_->stopServer();
-        // will be autodeleted
+    if (pcTcpServer_) {
+         pcTcpServer_->stopServer();
+         // will be autodeleted
     }
 
-    if(pcTcpClient_){
-        pcTcpClient_->slotStopClient();
-        // will be autodeleted
+    if (pcTcpClient_) {
+         pcTcpClient_->slotStopClient();
+         // will be autodeleted
     }
 
-    if(webServer_){
+    if (webServer_) {
         webServer_->slotStopServer();
         // will be autodeleted
     }
@@ -113,19 +110,19 @@ void AppController::inBuffChecker()
 {
 
     /*
-         *  // If uncomment next lines, all received text will showing on MainWindow form.
-         *
-         *  QByteArray ba;
-         *
-         *  char data;
-         *  while (inQueue_.tryPop(data)) {
-         *      ba.append(data);
-         *  }
-         *
-         *  if(! ba.isEmpty()){
-         *      emit sigStreamReaded(ba);
-         *  }
-         */
+     *  // If uncomment next lines, all received text will showing on MainWindow form.
+     *
+     *  QByteArray ba;
+     *
+     *  InBuffChunk chunk;
+     *  while (inQueue_.tryPop(chunk)) {
+     *      ba.append(chunk.data.data());
+     *  }
+     *
+     *  if(! ba.isEmpty()){
+     *      emit sigStreamReaded(ba);
+     *  }
+     */
 
     InBuffChunk chunk;
     while (inQueue_.tryPop(chunk)) {
@@ -136,8 +133,8 @@ void AppController::inBuffChecker()
     }
 
     // Print test results:
-    if(chunk.actualSize > 0)
-        if(chunk[chunk.actualSize-1] == char('E')) {// log a timer.eapsed, when we receive last char 'E'
+    if (chunk.actualSize > 0)
+        if (chunk[chunk.actualSize-1] == char('E')) {// log a timer.eapsed, when we receive last char 'E'
             double mbS = (totalBytesNum/1048576.)/(timer.elapsed()/1000.);
             qDebug() << "Total received: " << totalBytesNum <<"(~" << totalBytesNum/1048576. << "MB)"
                      << "Time: " << timer.elapsed()/1000. << "s  ("  << timer.elapsed() <<"ms)"
@@ -146,11 +143,6 @@ void AppController::inBuffChecker()
                      << QString::number(mbS * 8., 'f', 2).toDouble() << "Mbit/s";
             totalBytesNum = 0;
         }
-
-    // for debug purpose - print intermidiate results
-    //if (totalBytesNum > 0 && (totalBytesNum % 1000) == 0) {
-    //    qDebug() << "Total received: " << totalBytesNum << "Currently received: " << currentBytesNum;
-    //}
 
     QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &AppController::inBuffChecker);
 }

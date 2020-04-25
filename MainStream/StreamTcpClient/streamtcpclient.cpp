@@ -50,16 +50,13 @@ void MainStream::StreamTcpClient::slotStopClient()
 void MainStream::StreamTcpClient::slotReadyRead()
 {
     while (clientSocket_->bytesAvailable() > 0) {
-        //qint64 rlen = clientSocket_->read(readBuf_.data(), readBuf_.size());
-        //qDebug() << "Thread[" << QThread::currentThreadId()
-        //         << "]. Client[" << clientSocket_->socketDescriptor()
-        //         << "]. Read: " << QByteArray(readBuf_.data(), rlen);
-        //for (int i = 0; i < rlen; ++i) {
-        //    inQueue_.push(readBuf_[i]);
-        //}
-
         InBuffChunk chunk;
         chunk.actualSize = clientSocket_->read(chunk.data.data(), chunk.data.size());
+
+        //qDebug() << "Thread[" << QThread::currentThreadId()
+        //         << "]. Client[" << clientSocket_->socketDescriptor()
+        //         << "]. Read: " << QByteArray(chunk.data.data(), chunk.actualSize);
+
         if (chunk.actualSize > 0) {
             inQueue_.push(std::move(chunk));
         }
@@ -72,7 +69,7 @@ void MainStream::StreamTcpClient::slotSocketError(QAbstractSocket::SocketError e
     if(clientSocket_){
         errStr += QString(". Socket: %1. Description: %2: ").arg(clientSocket_->socketDescriptor()).arg(clientSocket_->errorString());
     }
-    qWarning() << errStr;
+    qDebug() << errStr;
     deleteLater();
     emit sigClientDisconnected();
 }
@@ -90,39 +87,32 @@ void MainStream::StreamTcpClient::slotCloseClient()
 
 void MainStream::StreamTcpClient::outBuffChecker()
 {
-    //char data; int sended = 0;
-    //while (sended < 8192 && outQueue_.tryPop(data)) {
-    //    writeBuf_[sended] = data;
-    //    sended++;
-    //}
-    //
-    //int wr = clientSocket_->write(writeBuf_.data(), sended);
-    //if(wr < sended){
-    //    qDebug() <<"wr:"<<wr<<"sendd:"<<sended<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
-    //}
-
-    OutBuffChunk data;
-    while (outQueue_.tryPop(data)) {
-        writeData(data);
-        clientSocket_->flush();
+    // We check for 'isValid()' only ONE time, because this func will block Qt Event loop
+    // and socket can't become Invalid untill this function return
+    if (clientSocket_->isValid()) {
+        OutBuffChunk chunk;
+        while (outQueue_.tryPop(chunk)) {
+            writeData(chunk);
+            clientSocket_->flush(); // We must call this, because if there are a lot of chunks in outQueue_, the socket buffer can overflow
+        }
     }
 
     QTimer::singleShot(1, Qt::TimerType::PreciseTimer, this, &StreamTcpClient::outBuffChecker);
 }
 
-void MainStream::StreamTcpClient::writeData(const MainStream::OutBuffChunk &data)
+void MainStream::StreamTcpClient::writeData(const MainStream::OutBuffChunk &chunk)
 {
-    std::size_t sendedNum = clientSocket_->write(data.data.data(), data.actualSize);
+    size_t sendedNum = clientSocket_->write(chunk.data.data(), chunk.actualSize);
 
-    if(sendedNum < data.actualSize){
-        std::size_t totalSended = sendedNum;
-        qDebug() <<"data.actualSize:"<<data.actualSize<<"sended:"<<sendedNum<<"     DENGEROUS. I suppose, that this is never logged:)      ddddddddddddddddddddddddddddddddddddddddddddddddddddd";
-        qDebug() << "All buffer to be sended:" << QByteArray(data.data.data(), data.actualSize);
-        while (totalSended < data.actualSize) {
-            qDebug() << "sendedNum:" << sendedNum << "totalSended:" << totalSended << "actualSize - sendedNum =" << data.actualSize - sendedNum;
-            qDebug() << "*(data.data.data()+sendedNum) = " << *(data.data.data()+sendedNum);
-            qDebug() << "To be sended next:" << QByteArray((data.data.data()+sendedNum), data.actualSize - sendedNum);
-            sendedNum = clientSocket_->write((data.data.data()+sendedNum), data.actualSize - sendedNum);
+    // If we wrote to the clientSocket_ not all chunk...
+    // This situation is very rare...
+    if(sendedNum < chunk.actualSize) {
+        size_t totalSended = sendedNum;
+        while (totalSended < chunk.actualSize) {
+            const char *leftDataPtr = (chunk.data.data() + totalSended);
+            size_t leftDataSize = (chunk.actualSize - totalSended);
+            sendedNum = clientSocket_->write(leftDataPtr, leftDataSize);
+            totalSended += sendedNum;
         }
     }
 }

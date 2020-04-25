@@ -48,8 +48,6 @@ private:
 private:
     QUrl hostAddr_;
     QPointer<QTcpSocket> clientSocket_;
-    std::array<char, READ_BUFSIZE> readBuf_;
-    std::array<char, WRITE_BUFSIZE> writeBuf_;
 
     InThreadSafeQueue &inQueue_;
     OutThreadSafeQueue &outQueue_;
