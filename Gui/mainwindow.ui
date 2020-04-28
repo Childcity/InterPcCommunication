@@ -89,7 +89,7 @@
      </rect>
     </property>
     <property name="readOnly">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="placeholderText">
      <string>Received stream data see in browser!</string>
@@ -262,7 +262,7 @@
      <property name="geometry">
       <rect>
        <x>100</x>
-       <y>30</y>
+       <y>50</y>
        <width>93</width>
        <height>28</height>
       </rect>
@@ -275,7 +275,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>50</y>
        <width>51</width>
        <height>22</height>
       </rect>
@@ -291,13 +291,26 @@
      <property name="geometry">
       <rect>
        <x>70</x>
-       <y>30</y>
+       <y>50</y>
        <width>21</width>
        <height>21</height>
       </rect>
      </property>
      <property name="text">
       <string>Mb</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>151</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Enable Testing Mode</string>
      </property>
     </widget>
    </widget>

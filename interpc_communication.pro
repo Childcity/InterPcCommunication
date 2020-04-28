@@ -25,7 +25,7 @@ HEADERS += \
     MainStream/StreamTcpServer/tcpserverclient.h \
     MainStream/StreamWebsocketServer/streamwebsocketserver.h \
     MainStream/StreamWebsocketServer/websocketserverworker.h \
-    MainStream/Utils/ThreadSafeQueue.hpp \
+    Utils/ThreadSafeQueue.hpp \
     MainStream/bufferchunk.hpp \
     MainStream/common.hpp \
     MainStream/constants.h \

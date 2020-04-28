@@ -2,7 +2,7 @@
 #define APPCONTROLLER_H
 
 #include "MainStream/streamcommunicationtype.hpp"
-#include <MainStream/StreamTcpServer/streamtcpserver.h>
+#include "MainStream/StreamTcpServer/streamtcpserver.h"
 #include "MainStream/StreamTcpClient/streamtcpclient.h"
 #include "MainStream/StreamWebsocketServer/streamwebsocketserver.h"
 
@@ -19,17 +19,21 @@ public:
 
     ~AppController() override;
 
+    void setIsTestInterPcMode(bool isTestInterPcMode);
+
 signals:
     void sigStreamReaded(const QByteArray &);
 
 public slots:
     void slotChangeConnectionInfo(const QString);
 
-    void slotChangeConnector(const StreamCommunicationType);
+    void slotChangeConnector(const MainStream::StreamCommunicationType);
 
     void slotChangeWsPort(int port);
 
     void slotSendStream(const QByteArray &);
+
+    void slotSetTestMode(bool);
 
     void quit();
 
@@ -47,6 +51,7 @@ private:
     InThreadSafeQueue inQueue_;
     OutThreadSafeQueue outQueue_;
 
+    bool isTestInterPcMode_;
     QElapsedTimer timer;
     std::uint64_t totalBytesNum = 0;
 };

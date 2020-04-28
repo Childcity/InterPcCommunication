@@ -1,0 +1,205 @@
+<html>
+    <head>
+        <title>Browser Client</title>
+    </head>
+    <body>
+        <h1>Browser Client</h1>
+        <p>
+            <input type="text" id="serverUrl" onkeydown="if(event.keyCode==13)initWebSocket();" value="ws://127.0.0.1:4322" />
+            <button onClick="initWebSocket();">Connect</button>
+            <button onClick="stopWebSocket();">Disconnect</button>
+            <button onClick="checkSocket();">State</button>
+        </p>
+        <p>
+            <textarea id="debugTextArea" style="width:400px;height:200px;"></textarea>
+        </p>
+        <p style="display:flex;justify-content:flex-start">
+            <textarea type="text" id="inputText" style="width:350px;height:50px;" onkeydown="if(event.keyCode==13)sendMessage();"></textarea>
+            <button onClick="sendMessage();">Send</button>
+        </p>
+        <div style="display:flex;justify-content:space-between;border-style:solid;padding:5px;width:390px;">
+            <div>
+                <label for="isSpeedTest">Speed Test</label>
+                <input type="checkbox" id="isSpeedTest" checked="checked">
+            </div>
+            <div>
+                <input type="number" id="mbNum" min="1" max="1000" step="10" value="10">
+                <label for="mbNum">Mb</label>
+                <button onClick="sendArray();">Send</button>
+            </div>
+        </div>
+
+        <script id="worker1" type="javascript/worker">
+            // This script for background Worker, that build buffer for Speed Test
+            // This script won't be parsed by JS engines because its type is javascript/worker.
+            self.onmessage = function(msg) {
+                try{
+                    const len = msg.data[0] * 1048576;
+                    let buff = new Uint8Array(len);
+                    buff.fill("F".charCodeAt(0));
+                    buff[0] = "S".charCodeAt(0); buff[buff.length - 1] = "E".charCodeAt(0);
+                    console.log(buff.length);
+                    //console.log("bytes sent :", '"' + buff[0] + " ... " + buff[buff.length - 1] + '"');
+                    self.postMessage(buff);
+                } catch(err) {
+                    self.postMessage(err);
+                }
+            };
+        </script>
+
+        <script type="text/javascript">
+            const testStartCharCode = "S".charCodeAt(0);
+            const testEndCharCode = "E".charCodeAt(0);
+            let totalBytesNum = 0;
+            let testStartedAt = null;
+
+            let debugTextArea = document.getElementById("debugTextArea");
+
+            function debug(message) {
+                debugTextArea.value += "DEBUG: " + message + "\n";
+                debugTextArea.scrollTop = debugTextArea.scrollHeight;
+            }
+
+            function sendMessage() {
+                var msg = document.getElementById("inputText").value;
+                if (websocket != null) {
+                    document.getElementById("inputText").value = "";
+                    let buff = new ArrayBuffer(msg.length * 2); // 2 bytes for each char
+                    let bufView = new Uint8Array(buff);
+                    for (let i = 0, strLen = msg.length; i < strLen; i++) {
+                        bufView[i] = msg.charCodeAt(i);
+                    }
+                    websocket.send(buff);
+                    console.log("string sent :", '"' + buff + '"');
+                }
+            }
+
+            function sendArray() {
+                const mbNum = document.getElementById("mbNum").value;
+                if (websocket != null) {
+                    var blob = new Blob([
+                        document.querySelector('#worker1').textContent
+                    ], { type: "text/javascript" });
+
+                    // Note: only in Chrome 10+.
+                    var worker = new Worker(window.URL.createObjectURL(blob));
+                    worker.onmessage = function (e) {
+                        //console.log("Received: " + e.data);
+                        if (e instanceof Error) {
+                            alert(e.message);
+                            return;
+                        }
+                        websocket.send(e.data.buffer);
+                        e.data = undefined;
+                    }
+                    worker.postMessage([mbNum]); // Start the worker asynchronously.
+                }
+            }
+
+            var websocket = null;
+
+            function initWebSocket() {
+                try {
+                    if (typeof MozWebSocket == 'function')
+                        WebSocket = MozWebSocket;
+
+                    if (websocket && websocket.readyState == 1)
+                        websocket.close();
+
+                    var wsUri = document.getElementById("serverUrl").value;
+                    websocket = new WebSocket(wsUri);
+                    websocket.binaryType = "arraybuffer";
+
+                    websocket.onopen = function (evt) {
+                        debug("CONNECTED");
+                    };
+
+                    websocket.onclose = function (evt) {
+                        debug("DISCONNECTED");
+                    };
+
+                    websocket.onmessage = function (evt) {
+                        let msg = "";
+                        if (evt.data instanceof ArrayBuffer) {
+                            const byteArray = new Uint8Array(evt.data);
+                            const isSpeedTest = document.getElementById("isSpeedTest").checked;
+
+                            if (!isSpeedTest) { // This is a simple text msg
+                                const enc = new TextDecoder("utf-8");
+                                msg = enc.decode(byteArray);
+                            } else { // This is a speed test (test will be > 20 byte)
+                                totalBytesNum += byteArray.byteLength;
+
+                                if (byteArray[0] === testStartCharCode) { // Start of speed test
+                                    testStartedAt = Date.now();
+                                }
+
+                                //debug("last: " + byteArray[byteArray.byteLength - 1]);
+                                if (byteArray[byteArray.byteLength - 1] === testEndCharCode) { // End of speed test
+                                    const elapsed = Date.now() - testStartedAt;
+                                    const mbS = (totalBytesNum / 1048576.0) / (elapsed / 1000.0);
+                                    msg = "Total received: " + totalBytesNum
+                                        + " (~" + parseFloat(totalBytesNum / 1048576.0.toFixed(2)) + " MB)\n"
+                                        + "Time: " + elapsed / 1000.0 + "s (" + elapsed + " ms)\n"
+                                        + "Speed: " + parseFloat(mbS.toFixed(2)) + " MB/s  ==  "
+                                        + parseFloat((mbS * 8).toFixed(2)) + " Mbit/s\n\n";
+                                    testStartedAt = null;
+                                    totalBytesNum = 0;
+                                }
+                                //msg = " " + " " + evt.data.byteLength;
+                            }
+                        } else {
+                            msg = evt.data;
+                        }
+
+                        debugTextArea.value += msg;
+                        debugTextArea.scrollTop = debugTextArea.scrollHeight;
+                    };
+
+                    websocket.onerror = function (evt) {
+                        debug('ERROR: ' + evt.data);
+                    };
+
+                } catch (exception) {
+                    debug('ERROR: ' + exception);
+                }
+            }
+
+            function stopWebSocket() {
+                if (websocket)
+                    websocket.close();
+            }
+
+            function checkSocket() {
+                if (websocket != null) {
+                    var stateStr;
+                    switch (websocket.readyState) {
+                        case 0: {
+                            stateStr = "CONNECTING";
+                            break;
+                        }
+                        case 1: {
+                            stateStr = "OPEN";
+                            break;
+                        }
+                        case 2: {
+                            stateStr = "CLOSING";
+                            break;
+                        }
+                        case 3: {
+                            stateStr = "CLOSED";
+                            break;
+                        }
+                        default: {
+                            stateStr = "UNKNOW";
+                            break;
+                        }
+                    }
+                    debug("WebSocket state = " + websocket.readyState + " ( " + stateStr + " )");
+                } else {
+                    debug("WebSocket is null");
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -8,7 +8,7 @@ MainStream::StreamWebsocketServer::StreamWebsocketServer(int port, MainStream::I
     wsServer_ = new WebSocketServerWorker(port, inQueue, outQueue, nullptr);
     wsServer_->moveToThread(serverThread_);
 
-    // we need to instanciate all fields in New Thread
+    // We need to instanciate all fields in New Thread
     // for this purpose we initDispenserObject() after workerThread_.start() and
     // initDispenserObject will be executed in New Thread
     connect(serverThread_, &QThread::started, wsServer_, &WebSocketServerWorker::startServer);

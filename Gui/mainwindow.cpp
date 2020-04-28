@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include <QDebug>
+#include <QScrollBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -81,13 +82,23 @@ void MainWindow::on_sendTextEdit_textChanged()
 void MainWindow::slotNewStreamData(const QByteArray &data)
 {
     ui->receiveTextEdit->insertPlainText(QString::fromUtf8(data));
+    ui->receiveTextEdit->setEnabled(true);
+    ui->receiveTextEdit->verticalScrollBar()->setValue(ui->receiveTextEdit->verticalScrollBar()->maximum());
+    ui->receiveTextEdit->setEnabled(false);
 }
 
 void MainWindow::on_pushButton_clicked()
 {
     std::uint64_t bytesCount = ui->mbSpinBox->text().toUInt() * 1048576;
+    testBuffer_.clear();
     testBuffer_.fill('F', bytesCount);
     testBuffer_.front() = 'S'; // This will begin speed test
     testBuffer_.back() = 'E';  // This will end speed test
     emit sigNewStreamData(testBuffer_);
+}
+
+void MainWindow::on_checkBox_clicked()
+{
+    emit sigTestModeChanged(ui->checkBox->isChecked());
+    ui->wsServerPort->setEnabled(!ui->checkBox->isChecked());
 }

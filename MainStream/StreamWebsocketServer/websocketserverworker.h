@@ -29,6 +29,7 @@ signals:
 
 public slots:
     void startServer();
+
     void slotStopServer();
 
 private slots:
@@ -36,20 +37,20 @@ private slots:
 
     void slotTextMessage(const QString &message);
 
-    void slotBinaryMessage(QByteArray message);
+    void slotBinaryMessage(const QByteArray &message);
 
     void slotSocketDisconnected();
 
     void slotCloseServer();
 
-protected:
-
-    void timerEvent(QTimerEvent *event) override;
-
 private:
-    QWebSocket *getCurrentClient();
+    void inBuffChecker();
 
-    void sendToClients(char data);
+    void sendToClients(const InBuffChunk &chunk);
+
+    void sendToClient(const QPointer<QWebSocket> clientSocket, const InBuffChunk &chunk);
+
+    QWebSocket *getCurrentClient();
 
 private:
     qint16 port_;
