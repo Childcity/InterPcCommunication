@@ -1,5 +1,5 @@
 # InterPcCommunication
-(Tcp or Udp) Server and Client with delivering stream data to browser through WebSockets 
+(Tcp or Udp) Server and Client with delivering stream data to web page (in browser) through WebSockets 
 
 ### WIN32 build
 You can download WIN32 build [here](./build_win32)
